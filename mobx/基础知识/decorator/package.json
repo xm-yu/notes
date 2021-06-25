@@ -1,0 +1,17 @@
+{
+  "name": "decorator",
+  "version": "1.0.0",
+  "description": "**Decorator**是 ES7 的一个新语法，目前处于第二阶段提案（stage-2），通过 @方法名可以对一些对象进行装饰包装然后返回一个被包装过的对象，可以装饰的对象有`类`、`属性`、`方法`",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.14.5",
+    "@babel/core": "^7.14.6",
+    "@babel/plugin-proposal-decorators": "^7.14.5"
+  }
+}
