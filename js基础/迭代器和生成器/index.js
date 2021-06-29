@@ -176,28 +176,62 @@
   }
 }
 
+/**
+ * 生成器
+ * es6 新增的一种代码结构，拥有在一个函数快内暂停和恢复代码执行的能力
+ * 结构：生成器的结构是一个函数 函数·名称前面加一个（*）表示他是一个生成器
+ * 只要是能定义函数的地方 就可以定义生成器
+ * 箭头函数不能用来定义生成器函数
+ */
+
+// 基础使用
 {
-  function* generatorFn() {
-    return 'foo';
+  // 生成器函数声明
+  function* generatorFn() {}
+
+  // 生成器表达式
+  let generatorFn1 = function* () {};
+
+  // 对象字面量方法的生成器
+  let foo = {
+    *generatorFn() {},
+  };
+  // 类实例 方法的生成器函数
+  class Foo {
+    *generatorFn() {}
   }
 
-  let generatorObj = generatorFn();
-  console.log(generatorObj);
-  console.log(generatorObj.next());
-  console.log(generatorObj.next());
-  console.log(generatorObj.next());
-  console.log(generatorObj.next());
-}
+  /**
+   * 调用生成器函数 会产生一个生成器对象
+   */
+  // 调用生成器函数会产生一个生成器对象
+  const g = generatorFn();
+  // 生成器对象一开始 处于暂停的状态
+  console.log(g); //generatorFn {<suspended>}
+  /**
+   * 生成器对象也实现了iterator借口，因此也具有next 方法
+   * 调用这个方法会让生成器开始或恢复执行
+   */
+  console.log(g.next()); // {done:true,value:undefined} 返回值类似 迭代器
 
-{
-  function* generatorFn() {
+  // value 是生成器函数的返回值 默认值 是 undefined 可以通过生成器函数返回值指定
+
+  function* generatorFunc() {
+    console.log('generator run');
     yield 'foo';
-    yield 'bar';
-    return 'baz';
+    return 'acc';
   }
-  const generatorObject = generatorFn();
-  console.log(generatorObject.next());
-  console.log(generatorObject.next());
-  console.log(generatorObject.next());
-  console.log(generatorObject.next());
+
+  const generatorFuncObject = generatorFunc();
+  console.log(generatorFuncObject.next()); // {value:'foo',done:false}
+  console.log(generatorFuncObject.next()); //{value:'foo',done:false}
+
+  // 生成器函数只会在初次调用next() 方法的后开始执行
+  function* generatorLog() {
+    console.log('generator');
+  }
+
+  const generatorLogObj = generatorLog();
+  // 生成器函数只有在初次调用生成器对象next 方法后才开始执行 所以这里才开始打印日志
+  generatorLogObj.next();
 }
