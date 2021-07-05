@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>匿名立即执行函数</title>
+</head>
+
+<body>
+  <script>
+    const test = (msg) => {
+      console.log(msg);
+    }
+
+    (test)('test log')
+
+
+
+    var x = 20;
+
+    var temp = {
+
+      x: 40,
+
+      foo: function (msg) {
+        console.log(msg);
+
+        console.log(this.x);
+        console.log(this);
+
+      }
+
+    };
+
+    /**
+     * 这里相当于 
+     * (function (msg){
+     *   console.log(msg);
+     *   console.log(this.x);   
+     *   console.log(this);
+     * })
+     **/
+    (temp.foo)('foo msg');
+
+
+    (0, temp.foo)('foo msg');
+
+
+    (null, temp.foo)('foo msg');
+
+    temp.foo();
+
+    (() => {
+      temp.foo()
+    })();
+
+
+  </script>
+</body>
+
+</html>
