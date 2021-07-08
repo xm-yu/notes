@@ -2,6 +2,19 @@
  * @promise解决了什么问题
  */
 
+const mockFetchUrl = 'https://jsonplaceholder.typicode.com/posts/1';
+const myFetch = async url => {
+  try {
+    const response = await fetch(url);
+    const json = await response.json();
+    throw new Error('error');
+
+    return json;
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+
 /**
  * @Promise解决函数嵌套的问题
  */
@@ -84,5 +97,39 @@
 // promise A+规明确规定 onFulfilled和 onRejected方法异步执行， 切应该在then方法被调用的那轮事件循环之后的新执行栈中执行
 
 // 正确使用Promise的方式
+// async 使用 promise all
 {
+  myFetch(mockFetchUrl)
+    .then(data => {
+      console.log(data);
+    })
+    .catch(err => {
+      // 直接使用promise 无法得到完整的错误堆栈信息
+      console.log('error result', err);
+    });
+  // mockAjax()
+
+  (async () => {
+    try {
+      const data = await myFetch(mockFetchUrl);
+      console.log('suceess');
+    } catch (error) {
+      // async / await能得到完整的堆栈信息
+      console.log('async error result', error);
+    }
+  })();
+
+  //todo async await 返回一个 Promise reject 会直接报错吗 ？
+  (async () => {
+    const result = await myFetch(mockFetchUrl);
+    console.log(result);
+  })();
+
+  myFetch(mockFetchUrl)
+    .then(data => {
+      console.log(data);
+    })
+    .catch(error => {
+      console.log(error);
+    });
 }
