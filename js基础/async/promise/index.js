@@ -2,7 +2,7 @@
  * @Author: yuzhicheng
  * @Date: 2021-07-07 16:36:12
  * @Last Modified by: yuzhicheng
- * @Last Modified time: 2021-07-07 18:25:08
+ * @Last Modified time: 2021-07-08 11:27:59
  * @Desc Promise  Promise 解决了什么问题
  */
 
@@ -57,6 +57,44 @@ console.log('-----promise start----');
  * 异步回调地狱
  */
 {
+}
+
+// trycatch
+{
+  // 异步回调
+  // 1、无法通过try catch 捕获回调函数中的错误
+  // 2、回调函数中抛出错误，没有完整的错误堆栈信息 ，只有回调函数中的堆栈信息。异步操作中的栈信息被中断，不方便我们调试错误
+  try {
+    setTimeout(() => {
+      // throws;
+      throw new Error('异步回到报错');
+    }, 100);
+  } catch (error) {
+    // 无法捕获异步回调中的错误
+    console.log(error);
+  }
+
+  // 同步回调
+  // 可以通过try catch 捕获异步回调中的错误
+  // 可以获得完整的堆栈信息
+  const foo = cb => {
+    const age = 12;
+    cb(age);
+  };
+
+  try {
+    foo(age => {
+      console.log(age);
+      throw new Error('同步回调报错');
+    });
+  } catch (error) {
+    console.log(error);
+  }
+
+  foo(age => {
+    console.log(age);
+    throw new Error('同步回调报错');
+  });
 }
 
 console.log('-----promise end-----');
