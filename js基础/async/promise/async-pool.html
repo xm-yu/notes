@@ -13,10 +13,10 @@
   <script>
     const urlTpl = 'https://jsonplaceholder.typicode.com/posts';
     const urls = [];
-    for (let index = 0; index < 10; index++) {
-      if (index % 2 === 0) {
-        urls.push('https://jsonplaceholder.typicode.com/fsddfsfd')
-      }
+    for (let index = 0; index < 4; index++) {
+      // if (index % 2 === 0) {
+      //   urls.push('https://jsonplaceholder.typicode.com/fsddfsfd')
+      // }
       urls.push(`${urlTpl}/${index + 1}`);
     }
 
@@ -147,17 +147,17 @@
     }
 
 
-    asyncPoolEs7(3, urls, (url) => fetch(url).then(r => {
-      if (r.status === 404) {
-        throw new Error('404')
-      }
-      return r.json()
-    }).catch((err) => {
-      console.log(err)
-      return { err: true }
-    })).then(data => console.log(data))
+    // asyncPoolEs7(3, urls, (url) => fetch(url).then(r => {
+    //   if (r.status === 404) {
+    //     throw new Error('404')
+    //   }
+    //   return r.json()
+    // }).catch((err) => {
+    //   console.log(err)
+    //   return { err: true }
+    // })).then(data => console.log(data))
 
-
+    // iterator 实现 顺序并发控制
     // (async () => {
     //   for (const url of urls) {
     //     const response = await fetch(url)
@@ -166,6 +166,172 @@
 
     //   }
     // })()
+
+    // reduce 实现顺序请求
+    // (async () => {
+    //   const all = urls.reduce(async (prevP, curUrl) => {
+    //     const results = await prevP
+    //     const r = await fetch(curUrl)
+    //     const j = await r.json()
+    //     console.log(j);
+    //   }, Promise.resolve([]))
+
+    //   const results = await all
+    //   console.log(results);
+    // })()
+
+
+
+    const asyncPoolEs6 = (limitPool, array, iteratorFn) => {
+      let i = 0, executing = [], ret = [];
+
+      const enqueue = () => {
+        if (i === array.length) {
+          return Promise.resolve()
+        }
+        const item = array[i++];
+        console.log('run', item);
+        const p = Promise.resolve().then(() => iteratorFn(item, array))
+        ret.push(p)
+
+        let r = Promise.resolve()
+        if (array.length > limitPool) {
+          let e = p.then(() => executing.splice(executing.indexOf(e), 1))
+          executing.push(e)
+          if (executing.length >= limitPool) {
+            r = Promise.race(executing)
+          }
+        }
+        return r.then(() => enqueue())
+      }
+      return enqueue().then(() => Promise.all(ret))
+
+    }
+
+
+    // asyncPoolEs6(5, urls, (url) => fetch(url).then(response => response.json()).then(json => {
+    //   return new Promise((resolve) => {
+    //     setTimeout(() => {
+    //       resolve(json)
+    //     }, Math.random() * 10000);
+    //   })
+    // })).then(result => {
+    //   console.log(result);
+    // })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const myRequestPool = async (limitPool, urls, iteratorFn) => {
+      const result = [], executing = [];
+      const len = urls.length;
+      for (const url of urls) {
+        const p = Promise.resolve().then(() => iteratorFn(url, urls))
+        result.push(p)
+        if (limitPool <= len) {
+          const e = p.then(() => executing.splice(executing.indexOf(e), 1))
+          executing.push(e)
+          if (executing.length >= limitPool) {
+            await Promise.all(executing)
+          }
+        }
+      }
+      return Promise.all(result)
+    }
+
+
+
+
+    // myRequestPool(5, urls, (url) => fetch(url).then(response => response.json()).then(json => {
+    //   return new Promise((resolve) => {
+    //     setTimeout(() => {
+    //       resolve(json)
+    //     }, Math.random() * 10000);
+    //   })
+    // })).then(result => {
+    //   console.log(result);
+    // })
+
+
+
+
+    const myRequestPool2 = (limit, urls, iteratorFn) => {
+
+      return new Promise((resolve, reject) => {
+        if (!Array.isArray(urls)) return reject(new Error('参数错误'))
+        const ret = [];
+        let i = 0;
+        const len = urls.length
+        const runCount = 0;
+        const start = () => {
+          while (limit && i < len) {
+            const url = urls[i++]
+            limit--;
+            console.log('run ', url);
+            const p = Promise.resolve().then(() => iteratorFn(url, urls))
+            ret.push(p)
+            p.finally(() => {
+              limit++;
+              if (i >= len) return resolve(Promise.all(ret))
+              start()
+            })
+          }
+        }
+        start()
+
+      })
+
+    }
+
+
+    myRequestPool2(5, urls, (url) => fetch(url).then(response => response.json()).then(json => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(json)
+        }, Math.random() * 1000);
+      })
+    })).then(result => {
+      console.log(result);
+    })
+
+
+    const step = () => {
+      new Promise((resolve) => {
+        setTimeout(() => {
+          resolve()
+        }, 3000);
+      }).then(() => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            console.log('green');
+            resolve()
+          }, 2000);
+        })
+      }).then(() => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            console.log('yellow');
+            resolve()
+          }, 1000);
+        })
+      }).then(() => {
+        step()
+      })
+    }
+
+
+    step()
 
   </script>
 </body>
