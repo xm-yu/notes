@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>请求并发控制</title>
+</head>
+
+<body>
+  <script>
+    console.log('request pool');
+    const urlTpl = 'https://jsonplaceholder.typicode.com/posts';
+    const urls = [];
+    for (let index = 0; index < 100; index++) {
+      // if (index % 2 === 0) {
+      //   urls.push('https://jsonplaceholder.typicode.com/fsddfsfd')
+      // }
+      urls.push(`${urlTpl}/${index + 1}`);
+    }
+
+    // es7实现请求并发控制 迭代器实现
+    const requestPool = async (urls, limit, iteratorFn) => {
+      const ret = [];
+      const executing = [];
+      const len = urls.length;
+      for (const url of urls) {
+        const p = Promise.resolve().then(() => iteratorFn(url, urls));
+        ret.push(p)
+        if (limit <= len) {
+          const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+          executing.push(e)
+          if (executing.length >= limit) {
+            await Promise.race(executing)
+          }
+        }
+      }
+      return Promise.all(ret)
+    }
+
+    // requestPool(urls, 2, (url) => fetch(url).then(r => r.json()).then(json => {
+    //   console.log(url);
+    //   return json
+    // })).then(r => {
+    //   console.log(r);
+    // })
+
+
+    // es6 promise & 队列实现 并发控制
+    {
+      const requestPool = (urls, limit, iteratorFn) => {
+        const executing = [], ret = [], len = urls.length;
+        let i = 0;
+        const enqueue = () => {
+          // 如果 i === urls last index resolve
+          if (i === urls.length) {
+            return Promise.resolve()
+          }
+          const url = urls[i++]
+          // 开始请求 借口
+          const p = Promise.resolve().then(() => iteratorFn(url, urls))
+          ret.push(p)
+          let r = Promise.resolve()
+          // 如果 limit长度大于等于 请求的长度 进入并发控制
+          if (limit <= len) {
+            // 控制队列的长度 不能大于limit 
+            const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+            executing.push(e)
+            if (executing.length >= limit) {
+              r = Promise.race(executing)
+            }
+          }
+          // return Promise 将多个异步请求的promise 链在一起 执行完最后一个 return Promise resole 将整个链条的Promise  resolve 掉
+          return r.then(() => enqueue())
+        }
+        return enqueue().then(() => Promise.all(ret))
+      }
+      requestPool(urls, 6, (url) => fetch(url).then(r => r.json()).then(json => {
+        console.log('end', url);
+        return json
+      })).then(r => {
+        console.log(r);
+      })
+    }
+
+
+
+
+    {
+
+
+    }
+
+
+
+
+
+
+
+
+
+  </script>
+</body>
+
+</html>

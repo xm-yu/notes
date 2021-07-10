@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+    // 实现mergeRequest 将传入的函数 按顺序执行输出
+    const timeout = ms => new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, ms);
+    });
+
+    const ajax1 = () => timeout(2000).then(() => {
+      console.log('1');
+      return 1;
+    });
+
+    const ajax2 = () => timeout(1000).then(() => {
+      console.log('2');
+      return 2;
+    });
+
+    const ajax3 = () => timeout(2000).then(() => {
+      console.log('3');
+      return 3;
+    });
+
+
+
+    const arrayFn = [ajax1, ajax2, ajax3];
+
+    // Promise 执行链实现
+    {
+      const mergeRequest = (arrayFn) => {
+        let p = Promise.resolve()
+        const result = []
+        for (const fn of arrayFn) {
+          p = p.then(fn).then((v) => {
+            result.push(v)
+            return result
+          })
+        }
+        return p
+      }
+
+      // mergeRequest([ajax1, ajax2, ajax3]).then(ret => {
+      //   console.log(ret);
+      // })
+
+    }
+
+
+    // iterator async 实现
+    {
+      const mergeRequest = async (arrayFn) => {
+        const ret = []
+        for (const fn of arrayFn) {
+          const v = await fn()
+          ret.push(v)
+        }
+        return ret
+      }
+
+      // mergeRequest(arrayFn).then(ret => {
+      //   console.log(ret);
+      // })
+    }
+
+
+    // reduce 实现
+    {
+      const mergeRequest = async (arrayFn) => {
+        return arrayFn.reduce(async (promise, fn) => {
+          const ret = await promise
+          const v = await fn()
+          ret.push(v)
+          return ret;
+        }, Promise.resolve([]))
+      }
+
+      // mergeRequest(arrayFn).then(ret => {
+      //   console.log(ret);
+      // })
+    }
+
+
+    {
+
+      const mergeQuest = (arr, cb) => {
+        const len = arr.length;
+        let i = 0;
+        let ret = [];
+
+        const start = () => {
+          if (i >= len) {
+            return cb(ret)
+          }
+          const fn = arr[i++]
+          fn().then(v => {
+            ret.push(v)
+
+          }).finally(() => {
+            start()
+          })
+        }
+        start()
+      }
+
+      mergeQuest(arrayFn, (ret) => {
+        console.log(ret);
+      })
+
+    }
+
+
+    {
+
+
+
+
+
+
+
+
+
+    }
+
+
+
+
+  </script>
+</body>
+
+</html>

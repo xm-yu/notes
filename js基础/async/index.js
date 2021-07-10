@@ -49,3 +49,72 @@ mockAjax(
     console.log(error);
   }
 );
+
+/**
+ * ajax 回调的方式实现 未来值的相加
+ */
+
+const add = (getX, getY, cb) => {
+  let x, y;
+  getX(result => {
+    x = result.id;
+    if (y && x) {
+      cb(x + y);
+    }
+  });
+  getY(result => {
+    y = result.id;
+    if (y && x) {
+      cb(x + y);
+    }
+  });
+};
+
+const getFuncX = cb => {
+  return mockAjax('https://jsonplaceholder.typicode.com/posts/1', cb);
+};
+const getFuncY = cb => {
+  return mockAjax('https://jsonplaceholder.typicode.com/posts/2', cb);
+};
+
+add(getFuncX, getFuncY, sum => {
+  console.log(sum);
+});
+
+/**
+ * Promise 处理这样的两个未来值的相加
+ */
+
+{
+  const add = (getXPromise, getYPromise) => {
+    return Promise.all([getXPromise, getYPromise]).then(
+      ([resultX, resultY]) => {
+        return resultX.id + resultY.id;
+      }
+    );
+  };
+
+  const get = async url => {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  };
+
+  add(
+    get('https://jsonplaceholder.typicode.com/posts/1'),
+    get('https://jsonplaceholder.typicode.com/posts/2')
+  ).then(sum => {
+    console.log(sum);
+  });
+
+  const p = get('https://jsonplaceholder.typicode.com/posts/1');
+  p.then(data => {
+    console.log('then one ');
+    console.log(data);
+  });
+
+  p.then(data => {
+    console.log('then two');
+    console.log(data);
+  });
+}
