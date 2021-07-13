@@ -113,19 +113,52 @@
         start()
       }
 
-      mergeQuest(arrayFn, (ret) => {
-        console.log(ret);
-      })
+      // mergeQuest(arrayFn, (ret) => {
+      //   console.log(ret);
+      // })
 
     }
 
+    const urls = [
+      'https://jsonplaceholder.typicode.com/posts/1',
+      'https://jsonplaceholder.typicode.com/posts/2',
+      'https://jsonplaceholder.typicode.com/posts/3',
+      'https://jsonplaceholder.typicode.com/posts/4'
+    ]
 
     {
+      const fetchData = (url, cb) => {
+        fetch(url).then(r => r.json()).then(d => cb(d))
+      }
+
+      const fetchFunc = (url) => {
+        return (cb) => {
+          fetchData(url, cb)
+        }
+      }
+
+      const mergeRequst = (urls, cb) => {
+        const ret = [];
+        let i = 0;
+        const len = urls.length;
+        const next = () => {
+          if (i >= len) {
+            cb(ret)
+          }
+          const url = urls[i++]
+          fetchData(url, (d) => {
+            ret.push(d)
+            next()
+          })
+        }
+        next()
+      }
 
 
 
-
-
+      mergeRequst(urls, (data) => {
+        console.log(data);
+      })
 
 
 

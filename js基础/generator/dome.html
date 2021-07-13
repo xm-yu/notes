@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>generator</title>
+</head>
+
+<body>
+  <script>
+    // generator
+    const url = 'https://jsonplaceholder.typicode.com/posts/1';
+    const fetchData = (url, cb) => {
+      fetch(url).then(r => r.json()).then(d => cb(d))
+    }
+
+    const fetchFunc = (url) => {
+      return (cb) => {
+        fetchData(url, cb)
+      }
+    }
+
+
+
+    function* genPromise() {
+      const ret1 = yield myFetch('https://jsonplaceholder.typicode.com/posts/1')
+      const ret2 = yield myFetch('https://jsonplaceholder.typicode.com/posts/2')
+      const ret3 = yield myFetch('https://jsonplaceholder.typicode.com/posts/3')
+      const ret4 = yield myFetch('https://jsonplaceholder.typicode.com/posts/4')
+      const ret5 = yield myFetch('https://jsonplaceholder.typicode.com/posts/5')
+      console.log(ret1, ret2, ret3, ret4, ret5);
+    }
+
+
+    function* genCallback() {
+      const ret1 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/1')
+      const ret2 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/2')
+      const ret3 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/3')
+      const ret4 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/4')
+      const ret5 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/5')
+
+      console.log(ret1, ret2, ret3, ret4, ret5);
+    }
+    console.log('generator');
+    {
+
+      function* gen() {
+        const result = yield fetch(url);
+        console.log(result);
+      }
+
+      // const i = gen();
+      // console.log(i);
+      // const result = i.next();
+      // console.log(result);
+      // result.value.then(r => r.json()).then(d => {
+      //   // 将获得的数据传进去
+      //   i.next(d)
+      // });
+
+    }
+
+    // {
+    //   function foo() {
+    //     return 'foo'
+    //   }
+    //   function bar() {
+    //     return 'bar'
+    //   }
+    //   function* gen() {
+    //     console.log('gen run ');
+    //     const str1 = yield foo()
+    //     console.log('in progress');
+    //     const str2 = yield bar()
+    //     console.log(str1, str2);
+    //     console.log('gen finish');
+    //   }
+
+    //   const i = gen()
+    //   const iobj = i.next()
+    //   console.log(iobj);
+    //   const obj2 = i.next('hello ' + iobj.value)
+    //   i.next('hello ' + obj2.value)
+    // }
+
+
+
+    // generatore 自执行处理多个异步
+    {
+
+      function* gen() {
+        const ret1 = yield fetch('https://jsonplaceholder.typicode.com/posts/1')
+        const ret2 = yield fetch('https://jsonplaceholder.typicode.com/posts/2')
+        const ret3 = yield fetch('https://jsonplaceholder.typicode.com/posts/3')
+        const ret4 = yield fetch('https://jsonplaceholder.typicode.com/posts/4')
+        const ret5 = yield fetch('https://jsonplaceholder.typicode.com/posts/5')
+
+        console.log(ret1, ret2, ret3, ret4, ret5);
+      }
+
+
+      function runGen(generator) {
+        const i = generator()
+
+        function next(data) {
+          const iObj = i.next(data)
+          const { value: promise, done } = iObj
+          if (done) return
+          promise.then(r => r.json()).then(d => {
+            next(d)
+          })
+        }
+
+        next({ msg: 'hahaha test msg' })
+
+      }
+      // runGen(gen)
+
+
+
+
+    }
+
+
+    //generator 自执行处理回调函数的异步
+    {
+
+
+      function* gen() {
+        const ret1 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/1')
+        const ret2 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/2')
+        const ret3 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/3')
+        const ret4 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/4')
+        const ret5 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/5')
+
+        console.log(ret1, ret2, ret3, ret4, ret5);
+      }
+
+      const run = (g) => {
+        const i = g()
+        const next = (data) => {
+          const result = i.next(data)
+          if (result.done) return;
+          result.value(next)
+
+
+        }
+        next()
+      }
+
+      // run(gen)
+
+    }
+
+
+
+    {
+      // 兼容 回调异步和 promise异步的run 函数
+      function isDef(v) {
+        return v !== undefined && v !== null;
+      }
+
+      function isPromise(v) {
+        return isDef(v) && typeof v.then === 'function' && typeof v.catch === 'function'
+      }
+
+
+      function runGenerator(genFn) {
+        const i = genFn();
+        function step(data) {
+          const { value, done } = i.next(data);
+          if (done) return;
+
+          if (isPromise(value)) {
+            value.then(d => {
+              step(d)
+            })
+          } else {
+            value(step)
+          }
+        }
+        step()
+      }
+
+
+      const myFetch = (url) => fetch(url).then(r => r.json())
+
+
+      // runGenerator(genPromise)
+      runGenerator(genCallback)
+
+
+
+
+
+
+    }
+  </script>
+</body>
+
+</html>
