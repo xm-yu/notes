@@ -309,7 +309,6 @@
           }
 
           function onRejected(e) {
-            console.log('onReject');
             let ret;
             try {
               console.log('gen.throw before');
@@ -318,10 +317,13 @@
             } catch (e) {
               return reject(e)
             }
+            console.log('onRejected desctory ');
+
             return next(ret)
           }
 
           function next(ret) {
+            console.log(ret);
             if (ret.done) return resolve(ret.value)
             const p = toPromise(ret.value)
             p.then(onFulfilled, onRejected)

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>co</title>
+</head>
+
+<body>
+  <script>
+    console.log('co')
+    const myFetch = (url) => fetch(url).then(r => r.json()).then(o => {
+      if (Object.keys(o).length === 0) {
+        return Promise.reject(new Error('网络错误'))
+      }
+      return o
+    })
+
+    function* genPromise() {
+      const ret1 = yield myFetch('https://jsonplaceholder.typicode.com/posts/1')
+      const ret2 = yield myFetch('https://jsonplaceholder.typicode.com/posts/2')
+      const ret3 = yield myFetch('https://jsonplaceholder.typicode.com/posts/3')
+      const ret4 = yield myFetch('https://jsonplaceholder.typicode.com/posssts/4')
+      const ret5 = yield myFetch('https://jsonplaceholder.typicode.com/posts/5')
+      const ret6 = yield 'str'
+      // console.log(ret1, ret2, ret3, ret4, ret5);
+      return [ret1, ret2, ret3, ret4, ret5, ret6]
+    }
+
+    const fetchData = (url, cb) => {
+      fetch(url).then(r => r.json()).then(d => cb(d))
+    }
+
+
+
+    const fetchFunc = (url) => {
+      return (cb) => {
+        fetchData(url, cb)
+      }
+    }
+
+    function* genCallback() {
+      const ret1 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/1')
+      const ret2 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/2')
+      const ret3 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/3')
+      const ret4 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/4')
+      const ret5 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/5')
+
+      console.log(ret1, ret2, ret3, ret4, ret5);
+    }
+
+
+    {
+      function isDef(v) {
+        return v !== undefined && v !== null;
+      }
+
+      function isPromise(v) {
+        return isDef(v) && typeof v.then === 'function' && typeof v.catch === 'function';
+      }
+
+
+      function thunkToPromise(fn) {
+        return new Promise((resolve, reject) => {
+          fn(d => resolve(d), e => reject(e))
+        })
+
+      }
+
+      function toPromise(v) {
+        if (isPromise(v)) return v;
+        if (typeof v === 'function') return thunkToPromise(v);
+        return Promise.resolve(v);
+      }
+
+
+
+      function run(gen) {
+
+        return new Promise((resolve, reject) => {
+          if (typeof gen === 'function') gen = gen();
+          // 判断是否是iterator
+          if (gen && typeof !gen.next === 'function') return resolve(gen);
+          console.log('run onFulfilled before');
+          onFulfilled()
+          function onFulfilled(data) {
+            let iteratorResult;
+
+            try {
+              iteratorResult = gen.next(data);
+            } catch (error) {
+              reject(error)
+            }
+            step(iteratorResult)
+          }
+
+          function onRejected(e) {
+            let iteratorResult;
+            try {
+              iteratorResult = gen.throw(e)
+            } catch (error) {
+              return reject(error)
+            }
+            console.log('onRejected run step before');
+            return step(iteratorResult)
+          }
+          function step(ret) {
+            console.log(ret);
+            if (ret.done) return resolve(ret.value)
+            const p = toPromise(ret.value)
+            p.then(onFulfilled, onRejected)
+          }
+
+
+        })
+      }
+
+      function* genPromise() {
+        const ret1 = yield myFetch('https://jsonplaceholder.typicode.com/posts/1')
+        const ret2 = yield myFetch('https://jsonplaceholder.typicode.com/posts/2')
+        const ret3 = yield myFetch('https://jsonplaceholder.typicode.com/posts/3')
+        let ret4;
+        try {
+          ret4 = yield myFetch('https://jsonplaceholder.typicode.com/posssts/4')
+        } catch (error) {
+          console.log('error');
+        }
+        const ret5 = yield myFetch('https://jsonplaceholder.typicode.com/posts/5')
+        const ret6 = yield 'str'
+        // console.log(ret1, ret2, ret3, ret4, ret5);
+        return [ret1, ret2, ret3, ret4, ret5, ret6]
+      }
+
+      // run(genPromise).then(d => console.log(d))
+
+
+      function* gen() {
+        var r1 = yield fetch('https://api.github.com/users/github');
+        var json1 = yield r1.json();
+        var r2 = yield fetch('https://api.github.com/users/github/followers');
+        var json2 = yield r2.json();
+        var r3 = yield fetch('https://api.github.com/users/github/repos');
+        var json3 = yield r3.json();
+
+        console.log([json1.bio, json2[0].login, json3[0].full_name].join('\n'));
+      }
+
+      run(genCallback)
+
+
+    }
+  </script>
+</body>
+
+</html>
