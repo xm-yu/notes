@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>async</title>
+</head>
+
+<body>
+  <script>
+    console.log('async');
+    const url1 = 'https://jsonplaceholder.typicode.com/posts/1';
+    const url2 = 'https://jsonplaceholder.typicode.com/posts/2';
+    const url3 = 'https://jsonplaceholder.typicode.com/posts/3';
+    const urls = [url1, url2, url3];
+
+
+    // (async () => {
+    //   const ret1 = await fetch(url1).then(r => r.json())
+    //   const ret2 = await fetch(url2).then(r => r.json())
+    //   console.log([ret1, ret2]);
+    // })();
+
+
+    // (async () => {
+    //   const p1 = fetch(url1).then(r => r.json())
+    //   const p2 = fetch(url2).then(r => r.json())
+    //   const ret1 = await p1;
+    //   const ret2 = await p2;
+    //   console.log([ret1, ret2]);
+    // })();
+
+
+    // 继发
+    // (async () => {
+    //   const result = []
+    //   for (const i of urls) {
+    //     const ret = await fetch(i).then(r => r.json())
+    //     result.push(ret)
+    //   }
+    //   console.log(result);
+    // })();
+
+    // 并发
+    // (async () => {
+    //   const result = await Promise.all(urls.map(url => fetch(url).then(r => r.json())))
+    //   console.log(result);
+    // })();
+
+
+
+    // (async () => {
+    //   // 相当于上面then 链串联
+    //   const allP = urls.map(async url => {
+    //     const response = await fetch(url);
+    //     return response.json();
+    //   })
+    //   // console.log(allP);
+    //   for (const iP of allP) {
+    //     const ret = await iP;
+    //     console.log(ret);
+    //   }
+    // })()
+
+    // const allResult = urls.reduce(async (prevResult, url) => {
+    //   console.log(prevResult);
+    //   const result = await prevResult;
+    //   const ret = await fetch(url).then(r => r.json());
+    //   result.push(ret);
+    //   return result
+    // }, Promise.resolve([]));
+
+    // allResult.then(rets => {
+    //   console.log(rets);
+    // })
+
+    // so 上面的本质是
+    let globalP = Promise.resolve([]);
+
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      globalP = globalP.then(rets => {
+        return fetch(url).then(r => r.json()).then((d) => {
+          rets.push(d)
+          return rets;
+        })
+      })
+    }
+
+    globalP.then(d => {
+      console.log(d);
+    })
+
+
+    // async catch error
+
+
+  </script>
+</body>
+
+</html>
