@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A B按钮 点击发送异步请求的顺序问题</title>
+</head>
+
+<body>
+  <input type="text" id="input">
+  <div>
+    <button id="a">A</button>
+    <button id="b">b</button>
+  </div>
+  <script>
+
+    const myFetch = (index, delay) => {
+      console.log('fetch run');
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(index)
+        }, delay * 1000);
+      })
+    }
+
+    let index = 1;
+
+    const asyncQueue = []
+    let it;
+    let running = false
+    function* man() {
+      running = true
+      yield asyncQueue.shift()();
+      if (asyncQueue.length) {
+        it = man();
+        it.next();
+      } else {
+        running = false
+
+      }
+    }
+    it = man();
+    function handle(req) {
+      asyncQueue.push(() => req().then(() => it.next()))
+      if (!running) {
+        it.next()
+
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('input')
+      const btnA = document.getElementById('a')
+      const btnB = document.getElementById('b')
+      btnA.addEventListener('click', () => {
+        handle(() => myFetch(index++, 3).then((d) => {
+          input.value = d
+        }))
+
+      })
+
+      btnB.addEventListener('click', () => {
+        handle(() => myFetch(index++, 1).then((d) => {
+          input.value = d
+        }))
+      })
+
+    })
+
+
+    // 思考 generator 实现
+
+  </script>
+</body>
+
+
+</html>
