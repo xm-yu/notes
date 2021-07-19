@@ -54,13 +54,107 @@
       return arrayCopy;
     }
 
-    const arr2 = [...transformCb([1, 3, 4, 5], x => x * x)]
-    console.log(arr2);
-    for (const ret of transformCb([1, 3, 4, 5], x => x * x)) {
-      console.log(ret);
+    // const arr2 = [...transformCb([1, 3, 4, 5], x => x * x)]
+    // console.log(arr2);
+    // for (const ret of transformCb([1, 3, 4, 5], x => x * x)) {
+    //   console.log(ret);
+
+    // }
+
+
+    // generator 
+    function httpFiFoRequestsExecutor(onTaskSuccess, onTaskFail) {
+      async function* execute(taskInfos, props) {
+        const { taskIdentifier, taskFn } = taskInfos || {};
+        try {
+          const result = await taskFn(props);
+          if (onTaskSuccess) {
+            onTaskSuccess(taskIdentifier, result[result.length - 1], result)
+          }
+          const nextTask = yield result;
+          yield* execute(nextTask, result);
+        } catch (e) {
+          if (onTaskFail) {
+            onTaskFail(taskIdentifier, e)
+          }
+          const nextTask = yield e;
+          yield* execute(nextTask, props);
+        }
+      }
 
     }
 
+    {
+      function httpFiFoRequestsExecutor({
+        onTaskSuccess,
+        onTaskFail,
+      }) {
+        async function* execute(taskInfos, props) {
+          const {
+            taskIdentifier,
+            taskFn
+          } = taskInfos || {};
+          try {
+            const result = await taskFn(props);
+            if (onTaskSuccess) {
+              onTaskSuccess(
+                taskIdentifier,
+                result[result.length - 1],
+                result
+              );
+            }
+            const nextTask = yield result; // waiting for the next task
+            yield* execute(nextTask, result); // restart from the begin : recursive call
+          } catch (reason) {
+            if (onTaskFail) {
+              onTaskFail(taskIdentifier, reason);
+            }
+            const nextTask = yield reason; // waiting for the next task
+            yield* execute(nextTask, props); // restart from the begin : recursive call
+          }
+        }
+
+        // Initiate the async generator
+        // and move the cursor to the first yield.
+        const iterator = execute({
+          taskIdentifier: null,
+          taskFn: () => [],
+        }, []);
+        iterator.next();
+
+        const executeTask = (taskIdentifier, taskFn) => iterator.next({
+          taskIdentifier,
+          taskFn,
+        });
+
+        return {
+          executeTask,
+          cancel: () => iterator.return()
+        };
+      }
+
+      const httpRequestsExecutor = httpFiFoRequestsExecutor({
+        onTaskSuccess: (requestId, requestResponse, responsesStack) => {
+          console.log('onTaskSuccess requestId : ', requestId);
+          console.log('onTaskSuccess requestResponse : ', requestResponse);
+          console.log('onTaskSuccess responsesStack : ', responsesStack);
+        },
+        onTaskFail: (requestId, requestError) => {
+          console.log('onTaskFail requestId : ', requestId);
+          console.log('onTaskFail requestError : ', requestError.message);
+        },
+      });
+
+      httpRequestsExecutor.executeTask('1', celebrities => Promise.resolve([...celebrities, 'Albert Einsten']));
+
+      httpRequestsExecutor.executeTask('2', celebrities => Promise.resolve([...celebrities, 'Nicolas Tesla']));
+
+      // asyncHttpFifoExecutor.cancel();
+
+      httpRequestsExecutor.executeTask('3', null);
+
+      httpRequestsExecutor.executeTask('4', celebrities => Promise.resolve([...celebrities, 'Marie Curie']));
+    }
   </script>
 </body>
 

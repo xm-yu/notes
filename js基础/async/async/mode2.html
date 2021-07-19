@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>犀牛书 async 学习</title>
+</head>
+
+<body>
+  <h2>犀牛书 async 学习</h2>
+  <script>
+    const url1 = 'https://jsonplaceholder.typicode.com/posts'
+    {
+
+      const doOperation1 = async () => {
+        // await 接受一个promise 实例 如果不是 将会抛出异常
+        const r = await fetch(url1);
+        const j = r.json();
+        // async 函数内部如果跑步异常 async 返回的promise 以这个异常作为 reject 的原因
+        // throw new Error('错误')
+        return j
+      }
+
+
+      doOperation1().then(data => {
+        console.log(data);
+      }, err => {
+        console.log(err);
+      });
+
+
+      (async () => {
+        function logStr(d) {
+          console.log(JSON.stringify(d[0]));
+        }
+
+        logStr(await doOperation1())
+        // 这两行代码本质上是一样的·
+        doOperation1().then(logStr)
+      })();
+    }
+    const urls = [
+      'https://jsonplaceholder.typicode.com/posts/1',
+      'https://jsonplaceholder.typicode.com/posts/2',
+      'https://jsonplaceholder.typicode.com/posts/3',
+      'https://jsonplaceholder.typicode.com/posts/4'
+
+    ]
+    {
+      // (async () => {
+      //   const promises = urls.map(url => fetch(url).then(r => r.json()));
+      //   for await (const data of promises) {
+      //     console.log(data);
+
+      //   }
+      // })();
+
+      (async () => {
+        for (const url of urls) {
+          const data = await fetch(url).then(r => r.json());
+          console.log(data);
+
+        }
+      })();
+    }
+
+  </script>
+</body>
+
+</html>
