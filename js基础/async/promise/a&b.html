@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ab 按钮 点击 请求队列问题</title>
+</head>
+
+<body>
+  <input type="text" id="input">
+  <div>
+    <button id="a">A</button>
+    <button id="b">b</button>
+  </div>
+  <script>
+    const url = 'https://jsonplaceholder.typicode.com/posts/'
+    let index = 1;
+    const myFetch = (index, delay) => {
+      console.log('fetch run');
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(index)
+        }, delay * 1000);
+      })
+    }
+
+    function httpFiFoRequestsExecutor(onTaskSuccess, onTaskFail) {
+      const firstRunSymbol = Symbol('cancel');
+      async function* execute(asyncFn) {
+        try {
+          const result = await asyncFn()
+          if (onTaskSuccess && result !== firstRunSymbol) {
+            onTaskSuccess(result)
+          }
+          const nextAsync = yield result
+          yield* execute(nextAsync)
+
+        } catch (error) {
+          if (onTaskFail) {
+            onTaskFail(error)
+          }
+          const nextAsync = yield error;
+          yield* execute(nextAsync)
+        }
+
+      }
+
+      const gen = execute(() => firstRunSymbol)
+      gen.next()
+
+      return {
+        executor: (asyncFn) => gen.next(asyncFn)
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const btnA = document.getElementById('a');
+      const btnB = document.getElementById('b');
+      const input = document.getElementById('input');
+      const asyncExecutor = httpFiFoRequestsExecutor((data) => {
+        input.value = data.title;
+      }, error => {
+        console.log(error);
+      })
+
+      btnA.addEventListener('click', function () {
+        asyncExecutor.executor(() => fetch(`${url}${index++}`).then(r => r.json()))
+      })
+
+      btnB.addEventListener('click', function () {
+        asyncExecutor.executor(() => fetch(`${url}${index++}`).then(r => r.json()))
+      })
+
+    })
+  </script>
+</body>
+
+</html>
