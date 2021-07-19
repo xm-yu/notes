@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>generator usege cases</title>
+</head>
+
+<body>
+  <script>
+
+    function* generatorCharSequence(start, end) {
+      for (let i = start; i <= end; i++) yield String.fromCharCode(i)
+    }
+
+
+    function* generateAPassword() {
+      yield* generatorCharSequence(48, 57);
+      yield* generatorCharSequence(65, 90);
+      yield* generatorCharSequence(97, 122);
+
+    }
+
+    // for (const code of generateAPassword()) {
+    //   console.log(code);
+
+    // }
+
+    // case 
+    // transform an array on demand
+
+    function* transform(iterable, transformFn) {
+      for (const x of iterable) {
+        yield transformFn(x)
+      }
+    }
+
+    const transformGen = transform([1, 2, 3, 4, 5], x => x * x)
+
+    const newArr = [...transformGen]
+    console.log(newArr);
+
+    const transformCb = (array, f) => {
+      const arrayCopy = [
+        ...array || [],
+      ];
+      if (arrayCopy && arrayCopy.length && f) {
+        for (let i = 0; i < arrayCopy.length; i++) {
+          arrayCopy[i] = f(arrayCopy[i]);
+        }
+      }
+      return arrayCopy;
+    }
+
+    const arr2 = [...transformCb([1, 3, 4, 5], x => x * x)]
+    console.log(arr2);
+    for (const ret of transformCb([1, 3, 4, 5], x => x * x)) {
+      console.log(ret);
+
+    }
+
+  </script>
+</body>
+
+</html>
