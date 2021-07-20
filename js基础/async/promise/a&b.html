@@ -27,13 +27,14 @@
     }
 
     function httpFiFoRequestsExecutor(onTaskSuccess, onTaskFail) {
-      const firstRunSymbol = Symbol('cancel');
+      const firstRunSymbol = Symbol('firstResult');
       async function* execute(asyncFn) {
         try {
           const result = await asyncFn()
           if (onTaskSuccess && result !== firstRunSymbol) {
             onTaskSuccess(result)
           }
+
           const nextAsync = yield result
           yield* execute(nextAsync)
 
@@ -48,10 +49,19 @@
       }
 
       const gen = execute(() => firstRunSymbol)
-      gen.next()
+      const firstGenResult = gen.next()
+      // console.log();
+      firstGenResult.then(data => {
+        console.log(data);
+      })
 
       return {
-        executor: (asyncFn) => gen.next(asyncFn)
+        executor: (asyncFn) => {
+          const genResult = gen.next(asyncFn)
+          genResult.then(data => {
+            console.log(data);
+          })
+        }
       }
     }
 

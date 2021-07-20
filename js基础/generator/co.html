@@ -121,19 +121,19 @@
         const ret1 = yield myFetch('https://jsonplaceholder.typicode.com/posts/1')
         const ret2 = yield myFetch('https://jsonplaceholder.typicode.com/posts/2')
         const ret3 = yield myFetch('https://jsonplaceholder.typicode.com/posts/3')
-        let ret4;
-        try {
-          ret4 = yield myFetch('https://jsonplaceholder.typicode.com/posssts/4')
-        } catch (error) {
-          console.log('error');
-        }
+        let ret4 = yield myFetch('https://jsonplaceholder.typicode.com/posssts/4')
+        // try {
+        //   ret4 = yield myFetch('https://jsonplaceholder.typicode.com/posssts/4')
+        // } catch (error) {
+        //   console.log('error');
+        // }
         const ret5 = yield myFetch('https://jsonplaceholder.typicode.com/posts/5')
         const ret6 = yield 'str'
         // console.log(ret1, ret2, ret3, ret4, ret5);
         return [ret1, ret2, ret3, ret4, ret5, ret6]
       }
 
-      // run(genPromise).then(d => console.log(d))
+      run(genPromise).then(d => console.log(d))
 
 
       function* gen() {
@@ -147,7 +147,7 @@
         console.log([json1.bio, json2[0].login, json3[0].full_name].join('\n'));
       }
 
-      run(genCallback)
+      // run(genCallback)
 
 
     }

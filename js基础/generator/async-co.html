@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sugar on top generator</title>
+</head>
+
+<body>
+  <script>
+    const myFetch = (url) => fetch(url).then(r => r.json()).then(o => {
+      if (Object.keys(o).length === 0) {
+        return Promise.reject(new Error('网络错误'))
+      }
+      return o
+    })
+
+
+    function testPromise() {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          reject({ msg: '验证不通过' })
+        }, 1000);
+      })
+    }
+
+
+
+    function* genPromise() {
+      const ret1 = yield myFetch('https://jsonplaceholder.typicode.com/posts/1')
+      const ret2 = yield myFetch('https://jsonplaceholder.typicode.com/posts/2')
+
+      const ret3 = yield myFetch('https://jsonplaceholder.typicode.com/posts/3')
+      let ret4;
+      try {
+        ret4 = yield myFetch('https://jsonplaceholder.typicode.com/posssts/4')
+
+      } catch (error) {
+        console.log(error);
+
+      }
+      const ret5 = yield myFetch('https://jsonplaceholder.typicode.com/posts/5')
+      const ret6 = yield testPromise()
+      const ret7 = yield myFetch('https://jsonplaceholder.typicode.com/posts/7')
+
+      // console.log(ret1, ret2, ret3, ret4, ret5);
+      return [ret1, ret2, ret3, ret4, ret5, ret6]
+    }
+
+
+    const fetchData = (url, cb) => {
+      fetch(url).then(r => r.json()).then(d => cb(d))
+    }
+
+
+
+    const fetchFunc = (url) => {
+      return (cb) => {
+        fetchData(url, cb)
+      }
+    }
+
+    function* genCallback() {
+      const ret1 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/1')
+      const ret2 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/2')
+      const ret3 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/3')
+      const ret4 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/4')
+
+      const ret5 = yield fetchFunc('https://jsonplaceholder.typicode.com/posts/5')
+      return [ret1, ret2, ret3, ret4, ret5]
+    }
+
+
+    function co() {
+      return new Promise((reslove, reject) => {
+        const gen = genPromise()
+
+        const step = (ret) => {
+          const result = gen.next(ret);
+          if (result.done) return reslove(result.value)
+          result.value.then(data => {
+            step(data)
+          }).catch(err => {
+            step(undefined)
+          })
+        }
+        step();
+      })
+
+    }
+
+
+    // co(genPromise).then(data => {
+    //   console.log(data);
+    // })
+
+    {
+      const isDef = v => v !== undefined && v !== null;
+
+      const isPromise = v => isDef(v) && typeof v.then === 'function' && typeof v.catch === 'function';
+
+      const thunkToPromise = cb => {
+        return new Promise((resolve, reject) => {
+          cb(d => resolve(d), e => reject(e))
+        })
+      }
+
+      const toPromise = (v) => {
+        if (isPromise(v)) return v;
+        if (typeof v === 'function') return thunkToPromise(v);
+        return Promise.resolve(v)
+      }
+
+      const betterCo = (gen) => {
+        return new Promise((resolve, reject) => {
+          if (typeof gen === 'function') gen = gen();
+          // 判断是否是 iterator
+          if (!gen || typeof gen.next !== 'function') return resolve(gen)
+          const onFulfilled = (data) => {
+            let nextResult;
+            try {
+              nextResult = gen.next(data)
+            } catch (error) {
+              return reject(error)
+            }
+            execute(nextResult)
+          }
+
+          const onRejected = (err) => {
+            let nextResult;
+            try {
+              // throw 方法会在暂停的时候将错误注入到生成器对象中 ，如果错误没有被处理 生成器就会被关闭
+              // 如果使用try catch 处理了这个错误 错误错误会跳过对应的yield 
+              nextResult = gen.throw(err)
+            } catch (error) {
+              return reject(error)
+            }
+            execute(nextResult)
+          }
+
+          const execute = (nextResult) => {
+            if (nextResult && nextResult.done) return resolve(nextResult.value)
+            const { value: asyncFn } = nextResult;
+            toPromise(asyncFn).then(onFulfilled, onRejected)
+          }
+
+          onFulfilled()
+        })
+
+      }
+
+
+      betterCo(genPromise).then(data => {
+        console.log(data);
+      })
+    }
+
+
+
+  </script>
+</body>
+
+</html>

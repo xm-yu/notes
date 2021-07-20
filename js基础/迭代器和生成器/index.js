@@ -209,7 +209,7 @@
   // 生成器对象一开始 处于暂停的状态
   console.log(g); //generatorFn {<suspended>}
   /**
-   * 生成器对象也实现了iterator借口，因此也具有next 方法
+   * 生成器对象也实现了iterator接口，因此也具有next 方法
    * 调用这个方法会让生成器开始或恢复执行
    */
   console.log(g.next()); // {done:true,value:undefined} 返回值类似 迭代器

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fi-fo-queue</title>
+</head>
+
+<body>
+
+  <input type="text" id="input">
+  <p>
+    <button id="a">A</button>
+    <button id="b">B</button>
+  </p>
+  <script>
+
+    const url = 'https://jsonplaceholder.typicode.com/posts/'
+    const urls = [
+      'https://jsonplaceholder.typicode.com/posts/1',
+      'https://jsonplaceholder.typicode.com/posts/2',
+      'https://jsonplaceholder.typicode.com/posts/3',
+      'https://jsonplaceholder.typicode.com/posts/4'
+    ]
+
+    let index = 1;
+    const getData = (injecturl) => {
+      let fetchUrl = injecturl ? injecturl : `${url}${index++}`
+      return new Promise((resolve) => {
+        fetch(fetchUrl).then(r => r.json()).then(d => {
+          setTimeout(() => {
+            resolve(d);
+          }, Math.random() * 3000);
+        })
+      })
+    }
+
+    // 实现异步队列
+
+
+    const httpFiFoExecutor = (onSucceed, onFail) => {
+      const firstSymbol = Symbol('first');
+      async function* execute(taskFn) {
+        const ret = await taskFn()
+        if (onSucceed && ret !== firstSymbol) {
+          onSucceed(ret)
+        }
+        console.log(ret);
+        // 任务执行完 暂停 等待外部调用next 注入新的任务
+        const nextTaskFn = yield ret;
+        yield* execute(nextTaskFn)
+      }
+
+      const gen = execute(() => firstSymbol);
+      gen.next()
+      return {
+        executor: (nextTask) => gen.next(nextTask)
+      }
+    }
+
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputElem = document.getElementById('input')
+      const buttonA = document.getElementById('a')
+      const buttonB = document.getElementById('b')
+      const httpExecutor = httpFiFoExecutor((data) => {
+        inputElem.value = data.title
+      })
+
+      buttonA.addEventListener('click', () => {
+        httpExecutor.executor(getData)
+      })
+
+      buttonB.addEventListener('click', () => {
+        httpExecutor.executor(getData)
+      })
+
+
+
+      // for (const url of urls) {
+      //   httpExecutor.executor((url) => getData(url))
+
+
+      // }
+
+
+    })
+
+
+
+  </script>
+</body>
+
+</html>
