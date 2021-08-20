@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bind的使用和模拟实现</title>
+</head>
+
+<body>
+  <script>
+    var value = 0;
+    const foo = {
+      value: 1
+    }
+
+    function bar() {
+      console.log(this.value)
+    }
+
+    bar()
+    /**
+     * bind方法创建一个新函数 在bind 被调用的时候 新函数的this 会指定为 bind函数的第一个参数 
+     * 其余参数作为新函数的参数
+     **/
+    const bindFoo = bar.bind(foo)
+    bindFoo()
+
+    Function.prototype.myBind = function (context) {
+      // 保存目标函数
+      const self = this;
+      const bindArgs = Array.prototype.slice.call(arguments, 1);
+      return function () {
+        const args = Array.prototype.slice.call(arguments)
+        return self.apply(context, bindArgs.concat(args))
+      }
+    }
+
+
+    function func(name, age) {
+      console.log(this.value, name, age);
+    }
+
+
+    const myBindFunc = func.myBind(foo, 'yzc')
+    myBindFunc(18)
+
+
+
+
+
+
+
+  </script>
+</body>
+
+</html>

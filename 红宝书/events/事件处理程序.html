@@ -10,16 +10,62 @@
 
 <body>
   <input type="button" value="input type button" id="btn" onclick="console.log('hello')">
+  <div id="div">click bubbling</div>
 </body>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const btn = document.getElementById('btn')
     console.log(btn.onclick);
 
-
     btn.addEventListener('click', () => {
       console.log('addEvent click');
     })
+
+
+    const divElem = document.getElementById('div')
+    divElem.addEventListener('click', () => {
+      console.log('div bubbling');
+    }, false)
+
+    document.body.addEventListener('click', () => {
+      console.log('body bubbling');
+    }, false)
+
+    document.addEventListener('click', () => {
+      console.log('document bubbling');
+      console.log(event);
+      event.stopPropagation()
+    }, false)
+
+    // 现代浏览器 会一直冒泡到window对象
+    window.addEventListener('click', () => {
+      console.log('window bubbling');
+    }, false)
+
+
+
+    // divElem.addEventListener('click', () => {
+    //   console.log('div cature');
+    // }, false)
+
+    // document.body.addEventListener('click', () => {
+    //   // event.stopImmediatePropagation()
+    //   event.stopPropagation()
+    //   console.log('body capture');
+    // }, false)
+    // document.addEventListener('click', () => {
+    //   // console.log(event);
+    //   console.log('document capture');
+    // }, false)
+
+
+    // // 现代浏览器 会一直冒泡到window对象
+    // window.addEventListener('click', () => {
+    //   console.log('window capture');
+    // }, false)
+
+
+
   })
 </script>
 
